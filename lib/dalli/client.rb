@@ -132,10 +132,11 @@ module Dalli
     def set(key, value, ttl=nil, options=nil)
       Rails.logger.info("Dalli set started")
       start_time = Time.now
-      perform(:set, key, value, ttl_or_default(ttl), 0, options)
+      result = perform(:set, key, value, ttl_or_default(ttl), 0, options)
       end_time = Time.now
       duration_seconds = end_time - start_time
       Rails.logger.info("Dalli set completed in #{duration_seconds} seconds")
+      result
     end    
 
     ##
@@ -370,8 +371,12 @@ module Dalli
       key = key.to_s
       key = validate_key(key)
       begin
+        Rails.logger.info("Dalli started server_for_key")
         server = ring.server_for_key(key)
+        Rails.logger.info("Dalli completed server_for_key")
+        Rails.logger.info("Dalli started request")
         ret = server.request(op, key, *args)
+        Rails.logger.info("Dalli completed request")
         ret
       rescue NetworkError => e
         Dalli.logger.debug { e.inspect }

@@ -64,12 +64,12 @@ module Dalli
 
     # Chokepoint method for instrumentation
     def request(op, *args)
-      Rails.logger.info("Dalli started request")
+      Rails.logger.info("Dalli started verify_state")
       verify_state
+      Rails.logger.info("Dalli completed verify_state")
       raise Dalli::NetworkError, "#{name} is down: #{@error} #{@msg}. If you are sure it is running, ensure memcached version is > 1.4." unless alive?
       begin
         send(op, *args)
-        Rails.logger.info("Dalli completed request")
       rescue Dalli::MarshalError => ex
         Dalli.logger.error "Marshalling error for key '#{args.first}': #{ex.message}"
         Dalli.logger.error "You are trying to cache a Ruby object which cannot be serialized to memcached."
@@ -207,14 +207,12 @@ module Dalli
     private
 
     def verify_state
-      Rails.logger.info("Dalli started verify_state")
       failure!(RuntimeError.new('Already writing to socket')) if @inprogress
       if @pid && @pid != Process.pid
         message = 'Fork detected, re-connecting child process...'
         Dalli.logger.info { message }
         reconnect! message
       end
-      Rails.logger.info("Dalli completed verify_state")
     end
 
     def reconnect!(message)
@@ -507,7 +505,6 @@ module Dalli
     NOT_FOUND = NilObject.new
 
     def generic_response(unpack=false, cache_nils=false)
-      Rails.logger.info("Dalli started generic_response")
       (extras, _, status, count) = read_header.unpack(NORMAL_HEADER)
       data = read(count) if count > 0
       if status == 1
@@ -523,7 +520,6 @@ module Dalli
       else
         true
       end
-      Rails.logger.info("Dalli completed generic_response")
     end
 
     def cas_response
@@ -564,8 +560,8 @@ module Dalli
     end
 
     def write(bytes)
-      Rails.logger.info("Dalli started write")
       begin
+        Rails.logger.info("Dalli started write")
         @inprogress = true
         result = @sock.write(bytes)
         @inprogress = false
@@ -577,8 +573,8 @@ module Dalli
     end
 
     def read(count)
-      Rails.logger.info("Dalli started read")
       begin
+        Rails.logger.info("Dalli started read")
         @inprogress = true
         data = @sock.readfull(count)
         @inprogress = false

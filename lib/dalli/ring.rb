@@ -29,7 +29,6 @@ module Dalli
     end
 
     def server_for_key(key)
-      Rails.logger.info("Dalli started generic_response")
       if @continuum
         hkey = hash_for(key)
         20.times do |try|
@@ -37,12 +36,10 @@ module Dalli
           server = @continuum[entryidx].server
           return server if server.alive?
           break unless @failover
-          Rails.logger.info("Dalli completed generic_response")
           hkey = hash_for("#{try}#{key}")
         end
       else
         server = @servers.first
-        Rails.logger.info("Dalli completed generic_response")
         return server if server && server.alive?
       end
       raise Dalli::RingError, "No server available"
