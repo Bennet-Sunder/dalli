@@ -64,7 +64,6 @@ module Dalli
       Rails.logger.info("Dalli get completed in #{duration_seconds} seconds")
     end
         
-
     ##
     # Fetch multiple keys efficiently.
     # If a block is given, yields key/value pairs one at a time.
@@ -128,10 +127,15 @@ module Dalli
     def cas!(key, ttl=nil, options=nil, &block)
       cas_core(key, true, ttl, options, &block)
     end
-
+    
     def set(key, value, ttl=nil, options=nil)
+      Rails.logger.info("Dalli set started")
+      start_time = Time.now
       perform(:set, key, value, ttl_or_default(ttl), 0, options)
-    end
+      end_time = Time.now
+      duration_seconds = end_time - start_time
+      Rails.logger.info("Dalli set completed in #{duration_seconds} seconds")
+    end    
 
     ##
     # Conditionally add a key/value pair, if the key does not already exist

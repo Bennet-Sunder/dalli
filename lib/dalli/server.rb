@@ -64,10 +64,12 @@ module Dalli
 
     # Chokepoint method for instrumentation
     def request(op, *args)
+      Rails.logger.info("Dalli started request")
       verify_state
       raise Dalli::NetworkError, "#{name} is down: #{@error} #{@msg}. If you are sure it is running, ensure memcached version is > 1.4." unless alive?
       begin
         send(op, *args)
+        Rails.logger.info("Dalli completed request")
       rescue Dalli::MarshalError => ex
         Dalli.logger.error "Marshalling error for key '#{args.first}': #{ex.message}"
         Dalli.logger.error "You are trying to cache a Ruby object which cannot be serialized to memcached."
@@ -205,12 +207,14 @@ module Dalli
     private
 
     def verify_state
+      Rails.logger.info("Dalli started verify_state")
       failure!(RuntimeError.new('Already writing to socket')) if @inprogress
       if @pid && @pid != Process.pid
         message = 'Fork detected, re-connecting child process...'
         Dalli.logger.info { message }
         reconnect! message
       end
+      Rails.logger.info("Dalli completed verify_state")
     end
 
     def reconnect!(message)
@@ -406,6 +410,7 @@ module Dalli
     FLAG_COMPRESSED = 0x2
 
     def serialize(key, value, options=nil)
+      Rails.logger.info("Dalli started serialize")
       marshalled = false
       value = unless options && options[:raw]
         marshalled = true
@@ -434,12 +439,15 @@ module Dalli
       flags = 0
       flags |= FLAG_COMPRESSED if compressed
       flags |= FLAG_SERIALIZED if marshalled
+      Rails.logger.info("Dalli completed serialize")
       [value, flags]
     end
 
     def deserialize(value, flags)
+      Rails.logger.info("Dalli started deserialize")
       value = self.compressor.decompress(value) if (flags & FLAG_COMPRESSED) != 0
       value = self.serializer.load(value) if (flags & FLAG_SERIALIZED) != 0
+      Rails.logger.info("Dalli completed deserialize")
       value
     rescue TypeError
       raise if $!.message !~ /needs to have method `_load'|exception class\/object expected|instance of IO needed|incompatible marshal file format/
@@ -499,6 +507,7 @@ module Dalli
     NOT_FOUND = NilObject.new
 
     def generic_response(unpack=false, cache_nils=false)
+      Rails.logger.info("Dalli started generic_response")
       (extras, _, status, count) = read_header.unpack(NORMAL_HEADER)
       data = read(count) if count > 0
       if status == 1
@@ -514,6 +523,7 @@ module Dalli
       else
         true
       end
+      Rails.logger.info("Dalli completed generic_response")
     end
 
     def cas_response
@@ -554,10 +564,12 @@ module Dalli
     end
 
     def write(bytes)
+      Rails.logger.info("Dalli started write")
       begin
         @inprogress = true
         result = @sock.write(bytes)
         @inprogress = false
+        Rails.logger.info("Dalli completed write")
         result
       rescue SystemCallError, Timeout::Error => e
         failure!(e)
@@ -565,10 +577,12 @@ module Dalli
     end
 
     def read(count)
+      Rails.logger.info("Dalli started read")
       begin
         @inprogress = true
         data = @sock.readfull(count)
         @inprogress = false
+        Rails.logger.info("Dalli completed read")
         data
       rescue SystemCallError, Timeout::Error, EOFError => e
         failure!(e)
