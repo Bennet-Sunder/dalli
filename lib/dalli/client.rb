@@ -55,9 +55,15 @@ module Dalli
     ##
     # Get the value associated with the key.
     # If a value is not found, then +nil+ is returned.
-    def get(key, options=nil)
-      perform(:get, key, options)
+    def get(key, req_options = nil)
+      Rails.logger.info("Dalli get started")
+      start_time = Time.now
+      perform(:get, key, req_options)
+      end_time = Time.now
+      duration_seconds = end_time - start_time
+      Rails.logger.info("Dalli get completed in #{duration_seconds} seconds")
     end
+        
 
     ##
     # Fetch multiple keys efficiently.
