@@ -453,6 +453,7 @@ module Dalli
       value = self.serializer.load(value) if (flags & FLAG_SERIALIZED) != 0
       end_time = Time.now
       Rails.logger.info("Dalli completed serializer load in #{end_time - start_time} seconds")
+      Rails.logger.info("Dalli deserialize value #{value} #{flags}")
       Rails.logger.info("Dalli completed deserialize")
       value
     rescue TypeError
