@@ -58,10 +58,11 @@ module Dalli
     def get(key, req_options = nil)
       Rails.logger.info("Dalli get started")
       start_time = Time.now
-      perform(:get, key, req_options)
+      result = perform(:get, key, req_options)
       end_time = Time.now
       duration_seconds = end_time - start_time
       Rails.logger.info("Dalli get completed in #{duration_seconds} seconds")
+      result
     end
         
     ##
