@@ -444,7 +444,7 @@ module Dalli
     def deserialize(value, flags)
       Rails.logger.info("Dalli started deserialize")
       Rails.logger.info("Dalli started decompress")
-      Rails.logger.info("Dalli deserialize value #{value} #{flags}")
+      Rails.logger.info("Dalli deserialize value #{value.inspect} #{flags}")
       start_time = Time.now
       value = self.compressor.decompress(value) if (flags & FLAG_COMPRESSED) != 0
       end_time = Time.now
