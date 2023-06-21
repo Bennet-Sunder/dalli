@@ -441,10 +441,21 @@ module Dalli
       [value, flags]
     end
 
+    start_time = Time.now
+    end_time = Time.now
+    Rails.logger.info("Dalli get completed in #{end_time - start_time} seconds")
     def deserialize(value, flags)
       Rails.logger.info("Dalli started deserialize")
+      Rails.logger.info("Dalli started decompress")
+      start_time = Time.now
       value = self.compressor.decompress(value) if (flags & FLAG_COMPRESSED) != 0
+      end_time = Time.now
+      Rails.logger.info("Dalli completed decompress in #{end_time - start_time} seconds")
+      start_time = Time.now
+      Rails.logger.info("Dalli started serializer load")
       value = self.serializer.load(value) if (flags & FLAG_SERIALIZED) != 0
+      end_time = Time.now
+      Rails.logger.info("Dalli completed serializer load in #{end_time - start_time} seconds")
       Rails.logger.info("Dalli completed deserialize")
       value
     rescue TypeError
